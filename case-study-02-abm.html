@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two Stages of ABM | Praveen Visal</title>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0d0d10;
+    --border: #2a2a2e;
+    --text: #f2f2f0;
+    --text-secondary: #b0b0b5;
+    --text-muted: #7a7a80;
+    --teal: #8FE3C0;
+    --pink: #E88BB0;
+    --coral: #E06B7A;
+    --blue: #5B7FE8;
+    --purple: #C77DD1;
+    --orange: #F2934A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    line-height: 1.6;
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+  header.nav { padding: 28px 0; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
+  header.nav .wrap { display: flex; justify-content: space-between; align-items: center; }
+  header.nav a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 15px; }
+  header.nav .back { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  header.nav .back:hover { color: var(--text-secondary); }
+  .hero { padding: 72px 0 40px; }
+  .eyebrow { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--teal); text-transform: uppercase; margin-bottom: 20px; }
+  h1 { font-size: 38px; font-weight: 700; font-style: italic; line-height: 1.18; margin-bottom: 24px; max-width: 640px; }
+  .stat-row { display: flex; align-items: baseline; gap: 20px; margin: 32px 0 8px; flex-wrap: wrap; }
+  .stat-number { font-size: 88px; font-weight: 800; background: linear-gradient(135deg, var(--teal), var(--pink)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+  .stat-label { font-size: 18px; color: var(--text-secondary); max-width: 300px; }
+
+  .arc-section { padding: 56px 0 16px; }
+  .arc-label { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--teal); text-transform: uppercase; margin-bottom: 28px; }
+  .arc { display: flex; align-items: center; overflow-x: auto; padding-bottom: 8px; }
+  .arc-node { flex: 0 0 auto; width: 104px; height: 104px; border-radius: 50%; border: 2px solid var(--node-color); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 600; color: var(--node-color); padding: 8px; }
+  .arc-node .sub { font-size: 10px; font-weight: 500; opacity: 0.75; margin-top: 2px; }
+  .arc-node.final { border-width: 3px; }
+  .arc-arrow { flex: 0 0 auto; width: 30px; height: 2px; background: var(--border); position: relative; }
+  .arc-arrow::after { content: ""; position: absolute; right: -1px; top: -4px; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 7px solid var(--border); }
+
+  .screenshot-section { padding: 40px 0; }
+  .screenshot-frame { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .screenshot-frame img { width: 100%; display: block; }
+  .caption { font-size: 14px; color: var(--text-muted); margin-top: 12px; text-align: center; }
+  .shot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 600px) { .shot-grid { grid-template-columns: 1fr; } }
+
+  section.prose { padding: 24px 0; }
+  h2 { font-size: 22px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  p { font-size: 17px; color: var(--text-secondary); margin-bottom: 16px; max-width: 660px; }
+  p strong { color: var(--text); font-weight: 600; }
+
+  .callout { background: var(--surface); border-left: 3px solid var(--teal); border-radius: 0 8px 8px 0; padding: 20px 24px; margin: 32px 0; font-size: 17px; color: var(--text); font-style: italic; }
+
+  .testimonial { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; margin: 32px 0; }
+  .testimonial p.quote { font-size: 17px; color: var(--text); font-style: italic; margin-bottom: 16px; }
+  .testimonial .attribution { display: flex; flex-direction: column; font-size: 14px; }
+  .testimonial .name { color: var(--teal); font-weight: 700; }
+  .testimonial .role { color: var(--text-muted); }
+
+  .more-section { padding: 40px 0 80px; }
+  .more-list { list-style: none; margin-top: 20px; }
+  .more-list li { padding: 18px 0; border-top: 1px solid var(--border); font-size: 16px; color: var(--text-secondary); }
+  .more-list li:last-child { border-bottom: 1px solid var(--border); }
+  .more-list .num { display: inline-block; font-weight: 700; color: var(--orange); margin-right: 8px; }
+
+  footer { padding: 48px 0 64px; border-top: 1px solid var(--border); }
+  footer .links { display: flex; gap: 24px; flex-wrap: wrap; }
+  footer a { color: var(--teal); text-decoration: none; font-size: 15px; font-weight: 600; }
+  footer a:hover { text-decoration: underline; }
+  footer p { color: var(--text-muted); font-size: 14px; margin-top: 20px; }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 28px; }
+    .stat-number { font-size: 56px; }
+    .arc-node { width: 84px; height: 84px; font-size: 10px; }
+  }
+
+  /* Lightbox */
+  .lightbox-trigger { cursor: zoom-in; }
+  .lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; padding: 48px 24px; cursor: zoom-out; }
+  .lightbox-overlay.active { display: flex; }
+  .lightbox-overlay img { max-width: 100%; max-height: 88vh; border-radius: 8px; box-shadow: 0 24px 64px rgba(0,0,0,0.6); cursor: default; }
+  .lightbox-close { position: absolute; top: 20px; right: 28px; color: #fff; font-size: 34px; cursor: pointer; background: none; border: none; line-height: 1; padding: 8px; }
+
+
+  /* Body of Work: deep-dive tiles and content modal */
+  .bow-section { padding: 48px 0; border-top: 1px solid var(--border); }
+  .bow-tile { display: flex; align-items: center; gap: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; cursor: pointer; transition: border-color 0.15s; }
+  .bow-tile:hover { border-color: var(--teal); }
+  .bow-tile:hover .bow-arrow { transform: translateX(4px); }
+  .bow-tile-icon { flex: 0 0 auto; width: 72px; height: 72px; }
+  .bow-tile-body { flex: 1; }
+  .bow-tile-title { font-size: 19px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .bow-tile-teaser { font-size: 15px; color: var(--text-secondary); }
+  .bow-arrow { flex: 0 0 auto; color: var(--teal); font-size: 22px; transition: transform 0.15s; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+  .modal-overlay.active { display: flex; }
+  .modal-box { background: #0a0a0d; border: 1px solid var(--border); border-radius: 16px; max-width: 700px; width: 100%; padding: 40px 40px 48px; position: relative; margin-bottom: 40px; }
+  .modal-close { position: absolute; top: 20px; right: 24px; color: var(--text-muted); font-size: 30px; cursor: pointer; background: none; border: none; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .modal-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: var(--teal); text-transform: uppercase; margin-bottom: 12px; }
+  .modal-title { font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 24px; line-height: 1.3; }
+  .modal-block { margin-bottom: 26px; padding-left: 18px; border-left: 3px solid var(--modal-color, var(--teal)); }
+  .modal-block h4 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .modal-block p { font-size: 15px; color: var(--text-secondary); margin-bottom: 0; max-width: none; }
+  .modal-block ul { margin: 8px 0 0; padding-left: 18px; }
+  .modal-block li { font-size: 15px; color: var(--text-secondary); margin-bottom: 6px; line-height: 1.5; }
+  .modal-block li:last-child { margin-bottom: 0; }
+  .modal-block .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--modal-color, var(--teal)); margin-bottom: 6px; }
+
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a href="index.html">Praveen Visal</a>
+    <a href="index.html" class="back">&larr; All case studies</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">Case study 02: Account-based marketing</span>
+    <h1>Two stages of ABM: proving the model, then scaling it.</h1>
+    <div class="stat-row">
+      <span class="stat-number">$1.18M</span>
+      <span class="stat-label">in pipeline from a 7-week ABM campaign on ~$27K spend, built on top of a pilot that first proved the model.</span>
+    </div>
+  </section>
+
+  <section class="arc-section">
+    <div class="arc-label">The arc</div>
+    <div class="arc">
+      <div class="arc-node" style="--node-color: var(--coral)">No outbound<span class="sub">motion yet</span></div>
+      <div class="arc-arrow"></div>
+      <div class="arc-node" style="--node-color: var(--blue)">Factors pilot<span class="sub">Jul 2024 &middot; $1M</span></div>
+      <div class="arc-arrow"></div>
+      <div class="arc-node" style="--node-color: var(--purple)">Scaled team<span class="sub">1 to full BDR/LDR</span></div>
+      <div class="arc-arrow"></div>
+      <div class="arc-node" style="--node-color: var(--orange)">ABM ads<span class="sub">+ TAM list</span></div>
+      <div class="arc-arrow"></div>
+      <div class="arc-node final" style="--node-color: var(--teal)">$1.18M<span class="sub">3 closed-won</span></div>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Before: no outbound motion at all</h2>
+    <p>Testsigma had no systematic way of knowing which companies were browsing the site with real buying intent. Inbound was the only motion. Outbound existed on paper, but without a way to prioritize who to actually call, it rarely started.</p>
+
+    <h2>The pilot</h2>
+    <p>In July 2024, I brought in <strong>Factors</strong> to de-anonymize website traffic, turning anonymous visitors into identifiable companies, then routing high-intent accounts to the right rep automatically. This wasn't a mature ABM program yet. It was a pilot, run to answer one question: is there real pipeline sitting in our anonymous traffic that we're simply not seeing?</p>
+    <p>The answer was yes. The pilot alone generated <strong>$1M in pipeline</strong>, and just as importantly, it gave Testsigma's outbound motion something it never had: a working, prioritized list of accounts actually worth calling.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/factors-vignesh-redacted.png')" src="assets/factors-vignesh-redacted.png" alt="Factors.ai Slack notification showing high-intent account activity routed to a BDR">
+    </div>
+    <p class="caption">A live Factors alert routing a high-intent account straight to the owning BDR. This is the tooling behind the pilot, still running today. (Company details blurred.)</p>
+  </section>
+
+  <section class="prose">
+    <h2>Scaling it</h2>
+    <p>Once the pilot proved the model, the motion scaled from a single BDR and LDR to the full team. De-anonymization stopped being an experiment and became a standing part of how Testsigma's outbound org operates: a reliable, quarter-over-quarter source of sales-accepted opportunities.</p>
+
+    <h2>The mature version: pure signal-based ABM</h2>
+    <p>With the foundation in place, I co-drove a dedicated ABM motion, a different level of sophistication from the original pilot. Factors pulled in third-party intent data from G2 and Bombora alongside our own site activity, and those combined signals shaped which accounts made the target list in the first place, not a generic TAM pulled from firmographics alone. LinkedIn ads served directly to that list, coordinated with the BDR-owned account list so that by the time a rep reached out, the account had already heard of Testsigma.</p>
+
+    <div class="bow-tile" onclick="openModal('modal-winloss')" style="margin: 28px 0;">
+      <svg class="bow-tile-icon" viewBox="0 0 72 72" fill="none">
+        <circle cx="28" cy="36" r="16" fill="#8FE3C0" fill-opacity="0.15" stroke="#8FE3C0" stroke-width="2"/>
+        <circle cx="46" cy="36" r="16" fill="#E06B7A" fill-opacity="0.15" stroke="#E06B7A" stroke-width="2"/>
+      </svg>
+      <div class="bow-tile-body">
+        <div class="bow-tile-title">Turning Win/Loss Data Into the Ad Messaging</div>
+        <div class="bow-tile-teaser">Signal scoring told us who to target. It didn't tell us what to say. Here's where that came from.</div>
+      </div>
+      <div class="bow-arrow">&rarr;</div>
+    </div>
+  </section>
+
+  <div class="modal-overlay" id="modal-winloss" onclick="if(event.target===this)closeModal('modal-winloss')">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('modal-winloss')">&times;</button>
+      <div class="modal-eyebrow">Body of work</div>
+      <div class="modal-title">Turning Win/Loss Data Into the Ad Messaging</div>
+      <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 26px;">Signal scoring decides who to reach and when. It has nothing to say about what to actually tell them once you have their attention. This is where that came from.</p>
+
+      <div class="modal-block" style="--modal-color: #8FE3C0;">
+        <span class="tag">The gap</span>
+        <h4>Good targeting, but no clear messaging strategy</h4>
+        <ul>
+          <li>Signal scoring told us which accounts were worth reaching and when</li>
+          <li>It said nothing about which value prop would actually land once we had their attention</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #E88BB0;">
+        <span class="tag">The method</span>
+        <h4>Every closed deal, region by region</h4>
+        <ul>
+          <li>Pulled all closed-won and closed-lost deals, split by region</li>
+          <li>Reviewed the actual Gong call recordings and Attive engagement data behind each one</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #5B7FE8;">
+        <span class="tag">What I was looking for</span>
+        <h4>Where Testsigma's answer actually mattered</h4>
+        <ul>
+          <li>In wins: which specific pain point came up on the call, and which of our answers actually moved the deal forward</li>
+          <li>In losses: where a prospect went cold or picked a competitor despite real engagement, and why</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #C77DD1;">
+        <span class="tag">The output</span>
+        <h4>The pattern became the pitch</h4>
+        <ul>
+          <li>Test maintenance burden came up repeatedly as the deciding factor, in both wins and losses</li>
+          <li>That's the specific value prop behind the region's ad copy, the 40% test-maintenance number in the APAC ad below is a direct output of this exercise, not a stat picked because it sounded good</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/abm-apac-ad.png')" src="assets/abm-apac-ad.png" alt="LinkedIn ABM ad served to APAC target accounts">
+    </div>
+    <p class="caption">One of the LinkedIn ABM ads served to the APAC target-account list.</p>
+  </section>
+
+  <section class="prose">
+    <p>In its first 7 weeks, this campaign generated <strong>$1.18M in pipeline</strong> ($748K of it directly ABM-influenced) on roughly $27K in spend. Three deals closed won in that window, and every one of them was 80%+ ABM-influenced before close.</p>
+
+    <div class="callout">
+      Two numbers, two different maturity levels. The pilot proved the model existed and gave the org its first outbound motion. The ABM campaign is what that model looks like once it's deliberately built out. Neither one is the whole story without the other.
+    </div>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/abm-yashaswini-post.png')" src="assets/abm-yashaswini-post.png" alt="Internal Slack post reporting the ABM campaign's pipeline and closed-won results">
+    </div>
+    <p class="caption">The internal results readout on the ABM campaign: the source of the $1.18M / $748K figures above.</p>
+  </section>
+
+  <section class="testimonial">
+    <p class="quote">"With Testsigma, he implemented and drove the adoption of Factors (ABM platform) which kickstarted the outbound motion and enabled to increase outbound pipeline and add 1 Million in Pipeline. Along with this, I have seen Praveen launch our GTM products, Atto and Arcus, live. Praveen has always been warm, easy to collaborate with and bridges the gap together. 10/10, recommended."</p>
+    <div class="attribution">
+      <span class="name">Shreyas Sachidananda</span>
+      <span class="role">SMB and Commercial AE at Testsigma. Worked with Praveen on different teams</span>
+    </div>
+  </section>
+
+  <section class="bow-section">
+    <h2>The full scoring and reporting logic</h2>
+    <p>The two headline numbers above are the outcome. Underneath them is a real system for deciding which accounts are worth a BDR's time, when, and why. Here's how it actually works.</p>
+    <div class="bow-tile" onclick="openModal('modal-abm')">
+      <svg class="bow-tile-icon" viewBox="0 0 72 72" fill="none">
+        <line x1="36" y1="36" x2="14" y2="14" stroke="#2a2a2e" stroke-width="1.5"/>
+        <line x1="36" y1="36" x2="58" y2="14" stroke="#2a2a2e" stroke-width="1.5"/>
+        <line x1="36" y1="36" x2="14" y2="58" stroke="#2a2a2e" stroke-width="1.5"/>
+        <line x1="36" y1="36" x2="58" y2="58" stroke="#2a2a2e" stroke-width="1.5"/>
+        <circle cx="36" cy="36" r="8" fill="#8FE3C0"/>
+        <circle cx="14" cy="14" r="4" fill="#E88BB0"/>
+        <circle cx="58" cy="14" r="4" fill="#5B7FE8"/>
+        <circle cx="14" cy="58" r="4" fill="#C77DD1"/>
+        <circle cx="58" cy="58" r="4" fill="#F2934A"/>
+      </svg>
+      <div class="bow-tile-body">
+        <div class="bow-tile-title">ABM Scoring &amp; Reporting Logic</div>
+        <div class="bow-tile-teaser">Intent scoring, temperature tiers, decay, sourced vs. influenced, BDR SLAs, and exit criteria, all in one place.</div>
+      </div>
+      <div class="bow-arrow">&rarr;</div>
+    </div>
+  </section>
+
+  <div class="modal-overlay" id="modal-abm" onclick="if(event.target===this)closeModal('modal-abm')">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('modal-abm')">&times;</button>
+      <div class="modal-eyebrow">Body of work</div>
+      <div class="modal-title">ABM Scoring &amp; Reporting Logic</div>
+
+      <div class="modal-block" style="--modal-color: #8FE3C0;">
+        <span class="tag">Intent scoring</span>
+        <h4>How an account earns a score</h4>
+        <p>Factors tracks specific page visits and assigns each one a weight. A pricing-page visit counts for a lot more than a general browse, and a docs-page visit, a strong buying signal, carries real weight too. Third-party intent data from G2 and Bombora feeds into the same score, so an account can register real intent before it ever visits our site. These weighted signals sum into a single account score.</p>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #E88BB0;">
+        <span class="tag">Temperature tiers</span>
+        <h4>Four temperature tiers: Hot, Warm, Cool, Ice</h4>
+        <ul>
+          <li><strong>Hot (80+ points):</strong> BDR-owned, 4-business-hour response SLA</li>
+          <li><strong>Warm (50-79):</strong> BDR-owned, next-business-day response</li>
+          <li><strong>Cool (1-49):</strong> marketing-owned, held until a second signal arrives</li>
+          <li><strong>Ice (0):</strong> unassigned, no action</li>
+        </ul>
+        <p style="margin-top: 8px;">A third-party intent spike with no first-party engagement yet gets separate handling: it queues for ads and cold outbound, but never gets labeled warm until the account actually engages directly.</p>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #5B7FE8;">
+        <span class="tag">Why ABM ads exist in this system</span>
+        <h4>Moving an account up a tier without waiting for them to come back</h4>
+        <p>It's the same repeated-exposure effect as a retargeted product ad following you on Instagram. Enough LinkedIn ad impressions on the right account, and their next visit reads as real intent, not cold traffic. That's the intent priming that moves an account from cold toward warm, and warm toward hot.</p>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #C77DD1;">
+        <span class="tag">Decay logic</span>
+        <h4>Heat doesn't last</h4>
+        <p>An account with no activity starts decaying, and after about 90 days with zero touch, it resets. That's what stops every account from getting marked hot forever and calling it a strategy.</p>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #F2934A;">
+        <span class="tag">Sourced vs. influenced</span>
+        <h4>The distinction most people get wrong</h4>
+        <p><strong>Sourced</strong> means ABM revived a genuinely cold or dead account, one no BDR was actively working, and brought them back into a real conversation. <strong>Influenced</strong> means a BDR was already in touch, and ABM's job was to warm the account up before that call landed, so the rep isn't reaching out cold to a company that's never heard of Testsigma. I track both separately in recurring reporting, by opportunity count and pipeline value, not as one blended ABM number.</p>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #8FE3C0;">
+        <span class="tag">BDR SLAs and multi-threading</span>
+        <h4>What happens once an account goes hot</h4>
+        <p>The clock starts immediately: first touch within 4 business hours of the alert, not the next day. From there it's a 7 to 10 touch cadence over roughly 10 days, personalized at the account and persona level. And it can't be one channel to one contact. The same account often has ten or more people who could have been the one browsing our site, so outreach hits multiple contacts across multiple channels: LinkedIn, email, and calls together, instead of a single email marked done.</p>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #E06B7A;">
+        <span class="tag">Exit criteria</span>
+        <h4>Knowing when to stop</h4>
+        <p>Showing ads to an account that's already bought a competitor's product is wasted spend, and it's one of the real gaps I found and fixed. If a BDR reports an account is dead or gone with a competitor, it comes out of the ABM list. Ads without an exit condition aren't a program. They're just spend.</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="arc-section">
+    <div class="arc-label">The full activity behind this campaign</div>
+    <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 16px;">Everything above happened inside this specific process, the same one regardless of which company I'm doing it at. Click to see it full size.</p>
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs2-abm-mindmap.png')" src="assets/cs2-abm-mindmap.png" alt="Mindmap of the full ABM process: signal-based scoring, dark intent handling, target list construction, auditing an inherited program, regional segmentation, funnel-stage plays, turning win/loss data into ad messaging, sales operational infrastructure, and sourced/influenced reporting">
+    </div>
+  </section>
+
+  <section class="more-section">
+    <h2>Why this matters beyond the numbers</h2>
+    <p>ABM only works if sales and marketing are actually reading the same signal. The recommendation above is from an AE, not a peer marketer, evidence that this wasn't a campaign run in isolation, but a motion built with the sales team, for the sales team.</p>
+  </section>
+
+  <footer>
+    <div class="links">
+      <a href="https://www.linkedin.com/in/praveenvisal/">LinkedIn</a>
+      <a href="https://github.com/praveen-builds-stuff/ai-growth-toolkit">AI Toolkit</a>
+      <a href="index.html">Back to case studies</a>
+    </div>
+    <p>Praveen Visal | Growth &amp; Product Marketing</p>
+  </footer>
+
+</div>
+
+<div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-overlay').classList.add('active');
+  }
+  function closeLightbox(e) {
+    document.getElementById('lightbox-overlay').classList.remove('active');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.active').forEach(function(m) { m.classList.remove('active'); });
+    }
+  });
+</script>
+</body>
+</html>

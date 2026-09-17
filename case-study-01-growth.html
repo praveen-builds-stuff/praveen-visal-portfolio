@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Growth Experimentation Engine | Praveen Visal</title>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0d0d10;
+    --surface-2: #16161a;
+    --border: #2a2a2e;
+    --text: #f2f2f0;
+    --text-secondary: #b0b0b5;
+    --text-muted: #7a7a80;
+    --teal: #8FE3C0;
+    --pink: #E88BB0;
+    --coral: #E06B7A;
+    --blue: #5B7FE8;
+    --purple: #C77DD1;
+    --orange: #F2934A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    line-height: 1.6;
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+  header.nav {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+  }
+  header.nav .wrap { display: flex; justify-content: space-between; align-items: center; }
+  header.nav a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 15px; }
+  header.nav .back { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  header.nav .back:hover { color: var(--text-secondary); }
+
+  .hero { padding: 72px 0 40px; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1.15;
+    margin-bottom: 24px;
+    max-width: 620px;
+  }
+  .stat-row { display: flex; align-items: baseline; gap: 20px; margin: 32px 0 8px; flex-wrap: wrap; }
+  .stat-number {
+    font-size: 96px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--teal), var(--pink));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .stat-label { font-size: 18px; color: var(--text-secondary); max-width: 280px; }
+
+  /* Arc diagram */
+  .arc-section { padding: 56px 0 16px; }
+  .arc-label { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--teal); text-transform: uppercase; margin-bottom: 28px; }
+  .arc {
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    gap: 0;
+  }
+  .arc-node {
+    flex: 0 0 auto;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 2px solid var(--node-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--node-color);
+    padding: 8px;
+  }
+  .arc-node.final { border-width: 3px; }
+  .arc-arrow { flex: 0 0 auto; width: 36px; height: 2px; background: var(--border); position: relative; }
+  .arc-arrow::after {
+    content: "";
+    position: absolute; right: -1px; top: -4px;
+    border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+    border-left: 7px solid var(--border);
+  }
+
+  .screenshot-section { padding: 56px 0; }
+  .screenshot-frame {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .screenshot-frame img { width: 100%; display: block; }
+  .shot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .shot-grid > div { display: flex; flex-direction: column; }
+  .shot-grid > div .caption { margin-top: auto; padding-top: 12px; }
+  @media (max-width: 600px) { .shot-grid { grid-template-columns: 1fr; } }
+  .caption { font-size: 14px; color: var(--text-muted); margin-top: 12px; text-align: center; }
+
+  section.prose { padding: 24px 0; }
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 40px 0 16px;
+    color: var(--text);
+  }
+  p { font-size: 17px; color: var(--text-secondary); margin-bottom: 16px; max-width: 660px; }
+  p strong { color: var(--text); font-weight: 600; }
+
+  .callout {
+    background: var(--surface);
+    border-left: 3px solid var(--teal);
+    border-radius: 0 8px 8px 0;
+    padding: 20px 24px;
+    margin: 32px 0;
+    font-size: 17px;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  .more-section { padding: 40px 0 80px; }
+  .more-list { list-style: none; margin-top: 20px; }
+  .more-list li {
+    padding: 18px 0;
+    border-top: 1px solid var(--border);
+    font-size: 16px;
+    color: var(--text-secondary);
+  }
+  .more-list li:last-child { border-bottom: 1px solid var(--border); }
+  .more-list .num {
+    display: inline-block;
+    font-weight: 700;
+    color: var(--orange);
+    margin-right: 8px;
+  }
+
+  footer { padding: 48px 0 64px; border-top: 1px solid var(--border); }
+  footer .links { display: flex; gap: 24px; flex-wrap: wrap; }
+  footer a { color: var(--teal); text-decoration: none; font-size: 15px; font-weight: 600; }
+  footer a:hover { text-decoration: underline; }
+  footer p { color: var(--text-muted); font-size: 14px; margin-top: 20px; }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 30px; }
+    .stat-number { font-size: 64px; }
+    .arc-node { width: 76px; height: 76px; font-size: 11px; }
+  }
+
+  /* Lightbox */
+  .lightbox-trigger { cursor: zoom-in; }
+  .lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; padding: 48px 24px; cursor: zoom-out; }
+  .lightbox-overlay.active { display: flex; }
+  .lightbox-overlay img { max-width: 100%; max-height: 88vh; border-radius: 8px; box-shadow: 0 24px 64px rgba(0,0,0,0.6); cursor: default; }
+  .lightbox-close { position: absolute; top: 20px; right: 28px; color: #fff; font-size: 34px; cursor: pointer; background: none; border: none; line-height: 1; padding: 8px; }
+
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a href="index.html">Praveen Visal</a>
+    <a href="index.html" class="back">&larr; All case studies</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">Case study 01: Growth experimentation</span>
+    <h1>When an AI-led redesign backfired, and AI fixed it.</h1>
+    <div class="stat-row">
+      <span class="stat-number">2x+</span>
+      <span class="stat-label">MQL conversion lift from one AI-diagnosed fix, landing above where the page started before anything went wrong.</span>
+    </div>
+  </section>
+
+  <section class="arc-section">
+    <div class="arc-label">The arc</div>
+    <div class="arc">
+      <div class="arc-node" style="--node-color: var(--coral)">Redesign</div>
+      <div class="arc-arrow"></div>
+      <div class="arc-node" style="--node-color: var(--orange)">CVR dip</div>
+      <div class="arc-arrow"></div>
+      <div class="arc-node" style="--node-color: var(--blue)">Attive diagnosis</div>
+      <div class="arc-arrow"></div>
+      <div class="arc-node" style="--node-color: var(--purple)">Rewrite</div>
+      <div class="arc-arrow"></div>
+      <div class="arc-node final" style="--node-color: var(--teal)">2x+ recovery</div>
+    </div>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/tms-lp-after.png')" src="assets/tms-lp-after.png" alt="Testsigma mobile app testing landing page, current version">
+    </div>
+    <p class="caption">The page today: the hero section that came out of this fix.</p>
+  </section>
+
+  <section class="prose">
+    <h2>The setup</h2>
+    <p>Early in an experimentation cycle, we rolled out an AI-assisted redesign of the hero section on our core product testing pages: new copy, new layout, generated and refined quickly using AI tooling. It felt like a clear improvement on paper.</p>
+
+    <h2>The problem</h2>
+    <p>It wasn't. Conversion rate dropped after the change went live. Not a rounding error. A real, visible dip on pages that mattered.</p>
+    <p>The easy response would have been to guess at a second redesign, or just revert and call it a wash. Neither felt right. A worse hero section usually means a <strong>specific</strong> mismatch between what the page says and what the visitor actually needs to hear, not a generically "bad" page.</p>
+
+    <h2>The diagnosis</h2>
+    <p>Instead of guessing, I used <strong>Gong and Attive</strong> to analyze call recordings from customers who'd actually closed, mining the transcripts for the recurring, product-specific pain points they described in their own words before they bought. That's a different exercise than asking "what do we think matters to buyers"; it's asking "what did buyers who actually converted say mattered to <strong>them</strong>."</p>
+    <p>Doing this manually (listening back through a month of closed-won calls, tagging themes, finding the patterns) would have taken hours. The AI-assisted pass took minutes, which meant the fix shipped fast enough to matter.</p>
+
+    <h2>The fix</h2>
+    <p>I rewrote the hero copy to speak directly to the pain points the call data surfaced, replacing generic value language with the actual words and priorities real buyers had used when explaining why they bought.</p>
+
+    <h2>The result</h2>
+    <p>Conversion recovered and landed meaningfully above where it had been <strong>before</strong> the AI redesign that caused the dip in the first place: more than a <strong>2x lift</strong> in MQL conversion on the pages involved.</p>
+
+    <div class="callout">
+      AI is excellent at compressing the time to insight. It's not a substitute for the insight-gathering step itself. The redesign that failed skipped straight to generation. The fix that worked used AI to listen first.
+    </div>
+  </section>
+
+  <section class="more-section">
+    <h2>More from the same program</h2>
+    <p>This wasn't a one-off. It's representative of how I run growth work generally: treat every result as a hypothesis to test, not a decision to defend. Across the full year, the same program grew overall website conversion <strong>3x</strong> and MQL conversion <strong>nearly 4x</strong> through continuous testing across the funnel. The fix above is a single example of that broader work. Here's the actual process behind it, the same one regardless of which company I'm doing it at.</p>
+  </section>
+
+  <section class="arc-section">
+    <p style="font-size: 15px; color: var(--text-muted); margin-bottom: 16px;">Click to see it full size.</p>
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs1-growth-mindmap.png')" src="assets/cs1-growth-mindmap.png" alt="Mindmap of the full growth experimentation process: continuous A/B testing, diagnosing conversion dips with customer-call data, building in-house tools, live chat experiments, real-time sales alerts, ICE-scored prioritization, honest kill decisions, and competitor research">
+    </div>
+  </section>
+
+  <section class="prose">
+    <p>Three of those moments, in more detail:</p>
+
+    <h3 style="font-size: 19px; color: var(--text); margin: 24px 0 10px;">A CTA that kept winning, twice</h3>
+    <p>Swapped the homepage's generic "Try for Free" CTA for something specific to what the product actually does: "Start testing." Ran it as an A/B test in VWO. The variant lifted button clicks from <strong>5.50% to 7.88%</strong>, with an 80%+ probability of beating control, enough to call and pause the test.</p>
+    <p>Took the same CTA and applied it to the nav bar's signup button next, based on what the first test showed. Same direction, smaller lift on a much bigger sample: <strong>1.76% to 2.18%</strong>, 85% probability of beating control.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="shot-grid">
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cs1-vwo-cta-homepage.png')" src="assets/cs1-vwo-cta-homepage.png" alt="VWO A/B test dashboard showing Start testing CTA outperforming control on the homepage"></div>
+        <p class="caption">The homepage test: "Start testing" vs. the default CTA.</p>
+      </div>
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cs1-vwo-cta-navbar.png')" src="assets/cs1-vwo-cta-navbar.png" alt="VWO A/B test dashboard showing the same CTA re-tested on the nav bar signup button"></div>
+        <p class="caption">Same CTA, re-tested on the nav bar signup button, based on the first test's learning.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h3 style="font-size: 19px; color: var(--text); margin: 24px 0 10px;">Exit-intent, replaced in-house</h3>
+    <p>Replaced a paid exit-intent tool with a self-built version, cutting <strong>~$1,440/year</strong> in subscription costs and turning an otherwise-lost segment of visitors into <strong>$1M+ in qualified pipeline</strong>.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs4-exit-intent-setup.png')" src="assets/cs4-exit-intent-setup.png" alt="Slack thread showing the in-house exit-intent popup and Narain's reaction">
+    </div>
+    <p class="caption">The popup, the day it shipped, with the actual monthly cost of the tool it replaced.</p>
+  </section>
+
+  <section class="prose">
+    <h3 style="font-size: 19px; color: var(--text); margin: 24px 0 10px;">Live chat on bottom-of-funnel pages</h3>
+    <p>Launched a BDR-staffed live chat experiment on bottom-of-funnel pages that generated <strong>$170K in pipeline</strong> on its own. A dedicated HubSpot chatbot triggers on each bottom-of-the-funnel page itself, and every response routes straight to sales as a real-time alert.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs1-livechat-pricing-today.png')" src="assets/cs1-livechat-pricing-today.png" alt="Testsigma pricing page with the live chat widget open">
+    </div>
+    <p class="caption">Live chat showing up on the pricing page</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="shot-grid">
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cs1-livechat-newchat-alert.png')" src="assets/cs1-livechat-newchat-alert.png" alt="HubSpot email notification about a new unassigned live chat conversation"></div>
+        <p class="caption">Email notification about a new chat reaching the sales team in real-time</p>
+      </div>
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cs1-livechat-narain.png')" src="assets/cs1-livechat-narain.png" alt="Slack thread with Narain's appreciation of the chatbot experiment"></div>
+        <p class="caption">The experiment's first booked meeting, called out the same week it launched.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="links">
+      <a href="https://www.linkedin.com/in/praveenvisal/">LinkedIn</a>
+      <a href="https://github.com/praveen-builds-stuff/ai-growth-toolkit">AI Toolkit</a>
+      <a href="index.html">Back to case studies</a>
+    </div>
+    <p>Praveen Visal | Growth &amp; Product Marketing</p>
+  </footer>
+
+</div>
+
+<div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-overlay').classList.add('active');
+  }
+  function closeLightbox(e) {
+    document.getElementById('lightbox-overlay').classList.remove('active');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+</body>
+</html>

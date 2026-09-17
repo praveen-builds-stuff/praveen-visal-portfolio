@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building PMM From Scratch | Praveen Visal</title>
+<style>
+  :root {
+    --bg: #000000; --surface: #0d0d10; --border: #2a2a2e;
+    --text: #f2f2f0; --text-secondary: #b0b0b5; --text-muted: #7a7a80;
+    --teal: #8FE3C0; --pink: #E88BB0; --coral: #E06B7A; --blue: #5B7FE8; --purple: #C77DD1; --orange: #F2934A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; line-height: 1.6; background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 28px 28px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+  header.nav { padding: 28px 0; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
+  header.nav .wrap { display: flex; justify-content: space-between; align-items: center; }
+  header.nav a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 15px; }
+  header.nav .back { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  header.nav .back:hover { color: var(--text-secondary); }
+  .hero { padding: 72px 0 40px; }
+  .eyebrow { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--teal); text-transform: uppercase; margin-bottom: 20px; }
+  h1 { font-size: 38px; font-weight: 700; font-style: italic; line-height: 1.18; margin-bottom: 24px; max-width: 640px; }
+  .stat-row { display: flex; align-items: baseline; gap: 20px; margin: 32px 0 8px; flex-wrap: wrap; }
+  .stat-number { font-size: 96px; font-weight: 800; background: linear-gradient(135deg, var(--teal), var(--pink)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+  .stat-label { font-size: 18px; color: var(--text-secondary); max-width: 300px; }
+  .arc-section { padding: 56px 0 16px; }
+  .arc-label { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--teal); text-transform: uppercase; margin-bottom: 28px; }
+  .arc { display: flex; align-items: center; overflow-x: auto; padding-bottom: 8px; }
+  .arc-node { flex: 0 0 auto; width: 104px; height: 104px; border-radius: 50%; border: 2px solid var(--node-color); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: 600; color: var(--node-color); padding: 8px; }
+  .arc-node .sub { font-size: 10px; font-weight: 500; opacity: 0.75; margin-top: 2px; }
+  .arc-node.final { border-width: 3px; }
+  .arc-arrow { flex: 0 0 auto; width: 30px; height: 2px; background: var(--border); position: relative; }
+  .arc-arrow::after { content: ""; position: absolute; right: -1px; top: -4px; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 7px solid var(--border); }
+  .screenshot-section { padding: 40px 0; }
+  .screenshot-frame { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .screenshot-frame img { width: 100%; display: block; }
+  .caption { font-size: 14px; color: var(--text-muted); margin-top: 12px; text-align: center; }
+  .shot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .shot-grid > div { display: flex; flex-direction: column; }
+  .shot-grid > div .caption { margin-top: auto; padding-top: 12px; }
+  @media (max-width: 600px) { .shot-grid { grid-template-columns: 1fr; } }
+  section.prose { padding: 24px 0; }
+  h2 { font-size: 22px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  p { font-size: 17px; color: var(--text-secondary); margin-bottom: 16px; max-width: 660px; }
+  p strong { color: var(--text); font-weight: 600; }
+  .callout { background: var(--surface); border-left: 3px solid var(--teal); border-radius: 0 8px 8px 0; padding: 20px 24px; margin: 32px 0; font-size: 17px; color: var(--text); font-style: italic; }
+  .testimonial { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; margin: 32px 0; }
+  .testimonial p.quote { font-size: 17px; color: var(--text); font-style: italic; margin-bottom: 16px; }
+  .testimonial .attribution { display: flex; flex-direction: column; font-size: 14px; }
+  .testimonial .name { color: var(--teal); font-weight: 700; }
+  .testimonial .role { color: var(--text-muted); }
+  .more-section { padding: 40px 0 80px; }
+  .more-list { list-style: none; margin-top: 20px; }
+  .more-list li { padding: 18px 0; border-top: 1px solid var(--border); font-size: 16px; color: var(--text-secondary); }
+  .more-list li:last-child { border-bottom: 1px solid var(--border); }
+  .more-list .num { display: inline-block; font-weight: 700; color: var(--orange); margin-right: 8px; }
+  footer { padding: 48px 0 64px; border-top: 1px solid var(--border); }
+  footer .links { display: flex; gap: 24px; flex-wrap: wrap; }
+  footer a { color: var(--teal); text-decoration: none; font-size: 15px; font-weight: 600; }
+  footer a:hover { text-decoration: underline; }
+  footer p { color: var(--text-muted); font-size: 14px; margin-top: 20px; }
+  @media (max-width: 600px) { h1 { font-size: 28px; } .stat-number { font-size: 64px; } .arc-node { width: 84px; height: 84px; font-size: 10px; } }
+
+  /* Lightbox */
+  .lightbox-trigger { cursor: zoom-in; }
+  .lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; padding: 48px 24px; cursor: zoom-out; }
+  .lightbox-overlay.active { display: flex; }
+  .lightbox-overlay img { max-width: 100%; max-height: 88vh; border-radius: 8px; box-shadow: 0 24px 64px rgba(0,0,0,0.6); cursor: default; }
+  .lightbox-close { position: absolute; top: 20px; right: 28px; color: #fff; font-size: 34px; cursor: pointer; background: none; border: none; line-height: 1; padding: 8px; }
+
+
+  /* Body of Work: deep-dive tiles and content modal */
+  .bow-section { padding: 48px 0; border-top: 1px solid var(--border); }
+  .bow-tile { display: flex; align-items: center; gap: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; cursor: pointer; transition: border-color 0.15s; }
+  .bow-tile:hover { border-color: var(--teal); }
+  .bow-tile:hover .bow-arrow { transform: translateX(4px); }
+  .bow-tile-icon { flex: 0 0 auto; width: 72px; height: 72px; }
+  .bow-tile-body { flex: 1; }
+  .bow-tile-title { font-size: 19px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .bow-tile-teaser { font-size: 15px; color: var(--text-secondary); }
+  .bow-arrow { flex: 0 0 auto; color: var(--teal); font-size: 22px; transition: transform 0.15s; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+  .modal-overlay.active { display: flex; }
+  .modal-box { background: #0a0a0d; border: 1px solid var(--border); border-radius: 16px; max-width: 700px; width: 100%; padding: 40px 40px 48px; position: relative; margin-bottom: 40px; }
+  .modal-close { position: absolute; top: 20px; right: 24px; color: var(--text-muted); font-size: 30px; cursor: pointer; background: none; border: none; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .modal-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: var(--teal); text-transform: uppercase; margin-bottom: 12px; }
+  .modal-title { font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 24px; line-height: 1.3; }
+  .modal-block { margin-bottom: 26px; padding-left: 18px; border-left: 3px solid var(--modal-color, var(--teal)); }
+  .modal-block h4 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .modal-block p { font-size: 15px; color: var(--text-secondary); margin-bottom: 0; max-width: none; }
+  .modal-block ul { margin: 0; padding-left: 18px; }
+  .modal-block li { font-size: 15px; color: var(--text-secondary); margin-bottom: 6px; line-height: 1.5; }
+  .modal-block li:last-child { margin-bottom: 0; }
+  .modal-block .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--modal-color, var(--teal)); margin-bottom: 6px; }
+
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a href="index.html">Praveen Visal</a>
+    <a href="index.html" class="back">&larr; All case studies</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">Case study 03: PMM</span>
+    <h1>Sole PMM for a new product, from launch to its first enterprise deal.</h1>
+    <div class="stat-row">
+      <span class="stat-number">#1</span>
+      <span class="stat-label">ranking in India for "test management software," traced directly to that first enterprise deal.</span>
+    </div>
+  </section>
+
+  <section class="arc-section">
+    <div class="arc-label">The full scope of the role</div>
+    <p style="font-size: 16px; color: var(--text-secondary); margin-bottom: 20px;">Everything below happened. This case study only covers the highlights. Click to see it full size.</p>
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-pmm-mindmap.png')" src="assets/cs3-pmm-mindmap.png" alt="Mindmap of all product marketing activities for Test Management (TMS), including launch, messaging, pricing, SEO, PLG experiments, webinars, sales enablement, partner marketing, and content">
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Thrown in solo</h2>
+    <p>When Testsigma launched Test Management (TMS), there was no dedicated product marketer for it. I took on the function alone, on top of my existing growth remit. Messaging, positioning, paid ads, sales enablement, guerrilla event marketing: all of it, from scratch, with no playbook to inherit.</p>
+
+    <div class="bow-tile" onclick="openModal('modal-jtbd')" style="margin: 28px 0;">
+      <svg class="bow-tile-icon" viewBox="0 0 72 72" fill="none">
+        <line x1="36" y1="36" x2="14" y2="14" stroke="#2a2a2e" stroke-width="1.5"/>
+        <line x1="36" y1="36" x2="58" y2="14" stroke="#2a2a2e" stroke-width="1.5"/>
+        <line x1="36" y1="36" x2="14" y2="58" stroke="#2a2a2e" stroke-width="1.5"/>
+        <line x1="36" y1="36" x2="58" y2="58" stroke="#2a2a2e" stroke-width="1.5"/>
+        <circle cx="36" cy="36" r="8" fill="#8FE3C0"/>
+        <circle cx="14" cy="14" r="4" fill="#E88BB0"/>
+        <circle cx="58" cy="14" r="4" fill="#5B7FE8"/>
+        <circle cx="14" cy="58" r="4" fill="#C77DD1"/>
+        <circle cx="58" cy="58" r="4" fill="#F2934A"/>
+      </svg>
+      <div class="bow-tile-body">
+        <div class="bow-tile-title">The JTBD Framework Behind TMS Messaging</div>
+        <div class="bow-tile-teaser">Before writing a word of hero copy, I mapped the actual jobs buyers were hiring TMS to do.</div>
+      </div>
+      <div class="bow-arrow">&rarr;</div>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>A recurring voice-of-customer engine</h2>
+    <p>Not everything in this stretch was specific to the TMS launch. This is the one exception: a system that turns real prospect conversations into messaging on an ongoing monthly cycle, and it's still running today, regardless of what's launching next.</p>
+
+    <div style="display:flex; gap: 48px; margin: 28px 0 24px; flex-wrap: wrap;">
+      <div>
+        <div class="stat-number" style="font-size: 42px;">3</div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">POV pillars, every month</div>
+      </div>
+      <div>
+        <div class="stat-number" style="font-size: 42px;">15</div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">verbatim-validated quotes per cycle</div>
+      </div>
+      <div>
+        <div class="stat-number" style="font-size: 42px;">Monthly</div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">not a one-time research sprint</div>
+      </div>
+    </div>
+
+    <div class="bow-tile" onclick="openModal('modal-voc')" style="margin: 28px 0;">
+      <svg class="bow-tile-icon" viewBox="0 0 72 72" fill="none">
+        <path d="M14 18 Q14 12 20 12 L52 12 Q58 12 58 18 L58 38 Q58 44 52 44 L28 44 L18 54 L20 44 Q14 44 14 38 Z" fill="#8FE3C0" fill-opacity="0.12" stroke="#8FE3C0" stroke-width="2"/>
+        <path d="M22 25 L28 31 L34 21 L40 33 L46 19 L52 29" stroke="#8FE3C0" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="bow-tile-body">
+        <div class="bow-tile-title">The Monthly VOC Messaging Engine</div>
+        <div class="bow-tile-teaser">Runs on its own every month. Turns real prospect calls into messaging built from their own words, not a guess at them.</div>
+      </div>
+      <div class="bow-arrow">&rarr;</div>
+    </div>
+  </section>
+
+  <div class="modal-overlay" id="modal-voc" onclick="if(event.target===this)closeModal('modal-voc')">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('modal-voc')">&times;</button>
+      <div class="modal-eyebrow">Body of work</div>
+      <div class="modal-title">The Monthly VOC Messaging Engine</div>
+      <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 26px;">A standing system, not a project with an end date. It runs every month without me having to remember to run it.</p>
+
+      <div class="modal-block" style="--modal-color: #8FE3C0;">
+        <span class="tag">The input</span>
+        <h4>That month's real prospect calls, not a sample</h4>
+        <ul>
+          <li>Pulls the month's prospect intro and discovery calls directly from Gong</li>
+          <li>Filters down to substantive, real conversations, skips short calls and no-shows that would just add noise</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #E88BB0;">
+        <span class="tag">The extraction</span>
+        <h4>Pains and triggers, in the prospect's own words</h4>
+        <ul>
+          <li>Surfaces recurring pain points, buying triggers, and must-have outcomes across that month's calls</li>
+          <li>Pulls 15 verbatim prospect quotes per cycle, verbatim-validated so it's never a paraphrase standing in for what someone actually said</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #5B7FE8;">
+        <span class="tag">The synthesis</span>
+        <h4>Raw signal turned into usable messaging</h4>
+        <ul>
+          <li>Synthesizes 3 POV pillars for the month, each with its own problem-to-value ladder</li>
+          <li>Writes 5 hook headlines per pillar, in language pulled directly from the calls, not invented afterward</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #C77DD1;">
+        <span class="tag">The output</span>
+        <h4>A one-pager, not a research deck no one reads</h4>
+        <ul>
+          <li>Delivered as a markdown one-pager, an Excel evidence appendix tracing every claim back to an actual quote, and a Slack-ready summary</li>
+          <li>Comes to me for review first, before anything goes out to the wider team</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-voc-onepager.png')" src="assets/cs3-voc-onepager.png" alt="Voice of Customer messaging sheet showing a POV pillar with problem-to-value framing and hooks">
+    </div>
+    <p class="caption">One pillar from an actual month's output: problem, value, and the hooks pulled straight from it.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-voc-slack.png')" src="assets/cs3-voc-slack.png" alt="Slack message showing the automated monthly VOC messaging summary, sent using Claude">
+    </div>
+    <p class="caption">The monthly summary, delivered to Slack automatically. (Prospect names and companies redacted.)</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-voc-claude-run.png')" src="assets/cs3-voc-claude-run.png" alt="Claude scheduled task interface showing the VOC engine's run history, connectors, and skills used">
+    </div>
+    <p class="caption">The scheduled run itself: Gong and Salesforce connected, output files generated automatically. (Customer account names redacted.)</p>
+  </section>
+
+  <section class="prose">
+    <h2>A live battlecard generator for competitive deals</h2>
+    <p>Sales enablement for competitive deals usually means a static PDF that goes stale the week it's published. I built a tool that generates a full battlecard on demand, pulling live G2 intelligence for whichever competitor a rep is actually up against that week, instead of whatever the last update cycle happened to cover.</p>
+
+    <div class="bow-tile" onclick="openModal('modal-battlecard')" style="margin: 28px 0;">
+      <svg class="bow-tile-icon" viewBox="0 0 72 72" fill="none">
+        <path d="M20 52 L48 24" stroke="#F2934A" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="50" cy="22" r="7" fill="#F2934A" fill-opacity="0.15" stroke="#F2934A" stroke-width="2.5"/>
+        <circle cx="18" cy="54" r="5" fill="#F2934A" fill-opacity="0.25" stroke="#F2934A" stroke-width="2"/>
+      </svg>
+      <div class="bow-tile-body">
+        <div class="bow-tile-title">The Battlecard Generator</div>
+        <div class="bow-tile-teaser">Pick any competitor. Get a positioning line, real proof points, and the honest gaps, generated live, not written once and left to rot.</div>
+      </div>
+      <div class="bow-arrow">&rarr;</div>
+    </div>
+  </section>
+
+  <div class="modal-overlay" id="modal-battlecard" onclick="if(event.target===this)closeModal('modal-battlecard')">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('modal-battlecard')">&times;</button>
+      <div class="modal-eyebrow">Body of work</div>
+      <div class="modal-title">The Battlecard Generator</div>
+      <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 26px;">Built so a rep gets a real answer to "who are we up against" in seconds, not whatever static doc someone last updated.</p>
+
+      <div class="modal-block" style="--modal-color: #F2934A;">
+        <span class="tag">The input</span>
+        <h4>Any competitor, sorted by category</h4>
+        <ul>
+          <li>17 competitors across open source, cloud platform, enterprise, and AI-native testing tools, so a rep picks the actual competitor in the deal, not a generic one</li>
+          <li>Pulls live G2 intelligence rather than a pre-written comparison someone typed up once</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #8FE3C0;">
+        <span class="tag">The output</span>
+        <h4>A positioning line, then the actual proof</h4>
+        <ul>
+          <li>Leads with a single sharp positioning line, then backs it with real customer wins, real numbers, not generic feature claims</li>
+          <li>Three tabs per competitor: the battlecard itself, a head-to-head feature view, and the underlying G2 intel it was generated from</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #E06B7A;">
+        <span class="tag">The honesty</span>
+        <h4>An "Honest Gaps" section, on purpose</h4>
+        <ul>
+          <li>Every battlecard names where the competitor is genuinely stronger, not just where we win</li>
+          <li>Each gap comes with an actual counter a rep can use, not an instruction to change the subject</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-battlecard-grid.png')" src="assets/cs3-battlecard-grid.png" alt="Battlecard generator competitor selection grid, organized by category">
+    </div>
+    <p class="caption">Pick a competitor by category, sales gets a battlecard built for the deal in front of them.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-battlecard-tool.png')" src="assets/cs3-battlecard-tool.png" alt="Generated battlecard for Testsigma vs BrowserStack, showing real customer wins and an honest gaps section">
+    </div>
+    <p class="caption">A generated battlecard: real wins with real numbers, and the gaps stated plainly rather than hidden. (Customer names redacted.)</p>
+  </section>
+
+  <section class="prose">
+    <h2>The SEO play</h2>
+    <p>One of the first priorities was visibility. I ran an SEO and content play on the TMS product page targeting "test management software," a competitive, high-intent keyword with established players already ranking. The page reached <strong>#1 in India and #4 in the US</strong>, and has held top-3 a year later.</p>
+
+    <p>Two more wins came out of the same stretch: a trial-length change that reshaped the top of the funnel, and Testsigma's <strong>highest-registered webinar to date (700+ registrations)</strong>, built entirely from scratch with no existing webinar program to lean on.</p>
+
+    <div class="bow-tile" onclick="openModal('modal-trial')" style="margin: 28px 0;">
+      <svg class="bow-tile-icon" viewBox="0 0 72 72" fill="none">
+        <circle cx="36" cy="36" r="28" stroke="#2a2a2e" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <circle cx="36" cy="36" r="15" fill="#8FE3C0" fill-opacity="0.15" stroke="#8FE3C0" stroke-width="2.5"/>
+        <text x="36" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#8FE3C0" font-family="-apple-system, sans-serif">7d</text>
+      </svg>
+      <div class="bow-tile-body">
+        <div class="bow-tile-title">Cutting the Trial From 21 Days to 7</div>
+        <div class="bow-tile-teaser">Longer trials don't convert better, they just give people more runway to put off deciding. New paying customers tripled.</div>
+      </div>
+      <div class="bow-arrow">&rarr;</div>
+    </div>
+  </section>
+
+  <div class="modal-overlay" id="modal-trial" onclick="if(event.target===this)closeModal('modal-trial')">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('modal-trial')">&times;</button>
+      <div class="modal-eyebrow">Body of work</div>
+      <div class="modal-title">Cutting the Trial From 21 Days to 7</div>
+      <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 26px;">A call made on a read of user behavior, not a formal split test. Worth showing the reasoning and being straight about what the method was and wasn't.</p>
+
+      <div class="modal-block" style="--modal-color: #8FE3C0;">
+        <span class="tag">The setup</span>
+        <h4>21 days by default, not by design</h4>
+        <ul>
+          <li>TMS inherited the standard 21-day trial window used across Testsigma's other products</li>
+          <li>No one had specifically decided that window fit this product's buying cycle, it was just the default</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #E88BB0;">
+        <span class="tag">The hypothesis</span>
+        <h4>Runway isn't the same as conviction</h4>
+        <ul>
+          <li>In a self-serve trial, more days doesn't reliably mean more confidence in the product</li>
+          <li>It often just means more room to postpone a decision that could've been made in week one</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #5B7FE8;">
+        <span class="tag">The change</span>
+        <h4>A straight cutover, not a controlled test</h4>
+        <ul>
+          <li>Cut the default trial window from 21 days to 7 for all new TMS trials</li>
+          <li>This was a before/after cutover, not an A/B split. Saying that plainly rather than dressing it up as more rigorous than it was</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #C77DD1;">
+        <span class="tag">The result</span>
+        <h4>New paying customers tripled</h4>
+        <ul>
+          <li>Comparing the period before the change to the period after, paying customer conversions roughly 3x'd</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #F2934A;">
+        <span class="tag">Worth flagging</span>
+        <h4>Correlation, not an isolated variable</h4>
+        <ul>
+          <li>Because it wasn't a controlled split, I can't fully rule out other things moving in the same window</li>
+          <li>What I can say: it's the largest before/after swing I've seen from a single lever on this product, and it's the kind of result that makes the case for actually running it as a proper split next time</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-jtbd" onclick="if(event.target===this)closeModal('modal-jtbd')">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('modal-jtbd')">&times;</button>
+      <div class="modal-eyebrow">Body of work</div>
+      <div class="modal-title">The JTBD Framework Behind TMS Messaging</div>
+      <p style="font-size: 15px; color: var(--text-secondary); margin-bottom: 26px;">Before writing a word of hero copy, I ran a Jobs-to-be-Done process to find out what buyers were actually hiring a test management tool to do. Here's the full process behind that.</p>
+
+      <div class="modal-block" style="--modal-color: #8FE3C0;">
+        <span class="tag">Step 1</span>
+        <h4>Gather raw signal from two different sources</h4>
+        <ul>
+          <li>Discovery-call transcripts from the sales team</li>
+          <li>Public forum threads (Reddit, review sites) where people described frustrations unprompted</li>
+          <li>Two sources matter: a customer talking to sales and a stranger venting online have different incentives to shade the truth</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #E88BB0;">
+        <span class="tag">Step 2</span>
+        <h4>Find the pattern, not the anecdote</h4>
+        <ul>
+          <li>One complaint isn't a job, it's one data point</li>
+          <li>Read across dozens of conversations for the same underlying need showing up in different words</li>
+          <li>"Scattered tools" and "too many places to look" get grouped as one job, not counted as two</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #5B7FE8;">
+        <span class="tag">Step 3</span>
+        <h4>Write it as a job, not a feature request</h4>
+        <ul>
+          <li>Each pattern rewritten as: the job, the pain stopping it, the outcome that counts as success</li>
+          <li>Example: the job wasn't "give me a test tool," it was "give me one place, and let me bring what I already have without losing it"</li>
+          <li>That distinction, job versus feature, is the whole point of the format</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #C77DD1;">
+        <span class="tag">Step 4</span>
+        <h4>Prioritize by repetition, not by what sounds compelling</h4>
+        <ul>
+          <li>Ranked jobs by how often they actually showed up, not by which felt most interesting to write about</li>
+          <li>Resisted leading with the cleverest insight instead of the most common one</li>
+        </ul>
+      </div>
+
+      <div class="modal-block" style="--modal-color: #E06B7A;">
+        <span class="tag">What shipped</span>
+        <h4>Where this actually landed</h4>
+        <ul>
+          <li>The two most repeated jobs: wanting one place instead of scattered tools, and wanting AI to absorb the busywork of writing and running tests</li>
+          <li>Became "one place" and "AI Agents," the two ideas doing the most work in the final hero copy</li>
+        </ul>
+      </div>
+
+      <div class="screenshot-frame" style="margin-top: 8px;">
+        <img class="lightbox-trigger" onclick="openLightbox('assets/tms-hero-shipped.png')" src="assets/tms-hero-shipped.png" alt="Testsigma homepage hero reading AI Agents to Plan, Create, Run and Manage Tests in One Place">
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-top: 10px; text-align: center;">Where the process actually landed: "AI Agents" and "in One Place," live on the page today.</p>
+    </div>
+  </div>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-seo-ranking.png')" src="assets/cs3-seo-ranking.png" alt="Google search results showing Testsigma ranking #1 for test management software">
+    </div>
+    <p class="caption">Testsigma's TMS page ranking #1 for "test management software": the search that mattered most for this launch.</p>
+  </section>
+
+  <section class="prose">
+    <p>That ranking translated directly into <strong>TMS's first enterprise deal</strong>, the first proof this new product could win in the enterprise segment and not stay confined to SMB.</p>
+
+    <h2>Turning a review into a stage</h2>
+    <p>I ran a G2 review campaign targeting our most active power users. One of those reviews came from a customer who liked the product enough to say yes to something bigger: becoming Testsigma's <strong>first-ever customer-as-speaker</strong> on a webinar. Getting a customer to describe your product in their own words, live, to a room of prospects, is worth more than anything I could write for them.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="shot-grid">
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/g2-email-redacted.png')" src="assets/g2-email-redacted.png" alt="G2 review request email (customer name redacted)"></div>
+        <p class="caption">The G2 review outreach that started the relationship. (Customer name redacted.)</p>
+      </div>
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cs3-webinar-ekam.png')" src="assets/cs3-webinar-ekam.png" alt="Customer webinar recap post and LinkedIn feedback"></div>
+        <p class="caption">The customer-as-speaker webinar that followed, and her own LinkedIn post about it afterward.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>Building a partner channel from scratch</h2>
+    <p>I initiated the partner marketing conversation with Linear directly. Built the Test Management by Testsigma integration page to their submission template and requirements, produced the embedded explainer video myself, and got it published on Linear's live integrations directory as a recognized partner.</p>
+    <p>It's already paying off as a trust signal: in at least one enterprise sales conversation, Linear's own team referenced Testsigma directly when advising a prospect on tooling options. That's what a partner directory is actually for: a channel other companies' sales teams point their own customers toward, a different kind of validation than anything I could write myself.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-linear-page.png')" src="assets/cs3-linear-page.png" alt="Test Management by Testsigma integration page on Linear's website">
+    </div>
+    <p class="caption">The Test Management by Testsigma integration, live on Linear's own site.</p>
+  </section>
+
+  <section class="testimonial">
+    <p class="quote">"I had the opportunity to work with Praveen on the couple of website product pages and content initiatives that gained visibility in AI/Answer Engine results. He has a strong growth marketing mindset with excellent expertise in CRO and content optimization. His ability to connect user behavior, content, and business goals really stands out."</p>
+    <div class="attribution">
+      <span class="name">Prasanna Kumar Totakura</span>
+      <span class="role">Senior SEO Analyst. Worked with Praveen on the same team</span>
+    </div>
+  </section>
+
+  <section class="more-section">
+    <h2>More from the same launch</h2>
+    <p>Guerrilla marketing outside GitLab's Epic Conference: a coffee cart with a Testsigma banner, handed out at the venue, to build brand visibility with exactly the audience most likely to need TMS.</p>
+  </section>
+
+  <section class="screenshot-section">
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs3-guerilla-gitlab.png')" src="assets/cs3-guerilla-gitlab.png" alt="LinkedIn post showing the guerrilla marketing coffee cart at GitLab's Epic Conference">
+    </div>
+    <p class="caption">The actual setup outside GitLab's Epic Conference.</p>
+  </section>
+
+  <section class="prose">
+    <ul class="more-list">
+      <li><span class="num">Ready on day one</span>Revamped <a href="https://testsigma.com/pricing" target="_blank" rel="noopener" style="color: var(--teal);">the pricing page</a> to a multi-product model before TMS launched, not scrambled together after.</li>
+      <li><span class="num">Armed for competitive deals</span>Built a feature-by-feature <a href="assets/testsigma-vs-zephyr-battlecard.pdf" target="_blank" rel="noopener" style="color: var(--teal);">battlecard positioning Test Management by Testsigma against Zephyr</a>, for sales enablement on competitive deals.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <div class="links">
+      <a href="https://www.linkedin.com/in/praveenvisal/">LinkedIn</a>
+      <a href="https://github.com/praveen-builds-stuff/ai-growth-toolkit">AI Toolkit</a>
+      <a href="index.html">Back to case studies</a>
+    </div>
+    <p>Praveen Visal | Growth &amp; Product Marketing</p>
+  </footer>
+
+</div>
+
+<div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-overlay').classList.add('active');
+  }
+  function closeLightbox(e) {
+    document.getElementById('lightbox-overlay').classList.remove('active');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.active').forEach(function(m) { m.classList.remove('active'); });
+    }
+  });
+</script>
+</body>
+</html>

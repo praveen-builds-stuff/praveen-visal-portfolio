@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building the Tools Nobody Asked For | Praveen Visal</title>
+<style>
+  :root {
+    --bg: #000000; --surface: #0d0d10; --border: #2a2a2e;
+    --text: #f2f2f0; --text-secondary: #b0b0b5; --text-muted: #7a7a80;
+    --teal: #8FE3C0; --pink: #E88BB0; --coral: #E06B7A; --blue: #5B7FE8; --purple: #C77DD1; --orange: #F2934A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; line-height: 1.6; background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 28px 28px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+  header.nav { padding: 28px 0; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
+  header.nav .wrap { display: flex; justify-content: space-between; align-items: center; }
+  header.nav a { color: var(--text); text-decoration: none; font-weight: 700; font-size: 15px; }
+  header.nav .back { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+  header.nav .back:hover { color: var(--text-secondary); }
+  .hero { padding: 72px 0 40px; }
+  .eyebrow { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--teal); text-transform: uppercase; margin-bottom: 20px; }
+  h1 { font-size: 38px; font-weight: 700; font-style: italic; line-height: 1.18; margin-bottom: 24px; max-width: 640px; }
+  .stat-row { display: flex; align-items: baseline; gap: 20px; margin: 32px 0 8px; flex-wrap: wrap; }
+  .stat-number { font-size: 96px; font-weight: 800; background: linear-gradient(135deg, var(--teal), var(--pink)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+  .stat-label { font-size: 18px; color: var(--text-secondary); max-width: 320px; }
+  .tool-section { padding: 48px 0; border-top: 1px solid var(--border); }
+  .tool-section:first-of-type { border-top: none; }
+  .tool-label { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--orange); text-transform: uppercase; margin-bottom: 12px; }
+  .tool-title { font-size: 26px; font-weight: 700; margin-bottom: 16px; }
+  p { font-size: 17px; color: var(--text-secondary); margin-bottom: 16px; max-width: 660px; }
+  p strong { color: var(--text); font-weight: 600; }
+  .screenshot-frame { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); margin: 24px 0; }
+  .screenshot-frame img { width: 100%; display: block; }
+  .caption { font-size: 14px; color: var(--text-muted); margin-top: 12px; text-align: center; }
+  .shot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 600px) { .shot-grid { grid-template-columns: 1fr; } }
+  .pending { background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; padding: 20px 24px; margin: 24px 0; font-size: 15px; color: var(--text-muted); font-style: italic; }
+  .callout { background: var(--surface); border-left: 3px solid var(--teal); border-radius: 0 8px 8px 0; padding: 20px 24px; margin: 32px 0; font-size: 17px; color: var(--text); font-style: italic; }
+  .more-section { padding: 40px 0 80px; }
+  footer { padding: 48px 0 64px; border-top: 1px solid var(--border); }
+  footer .links { display: flex; gap: 24px; flex-wrap: wrap; }
+  footer a { color: var(--teal); text-decoration: none; font-size: 15px; font-weight: 600; }
+  footer a:hover { text-decoration: underline; }
+  footer p { color: var(--text-muted); font-size: 14px; margin-top: 20px; }
+  @media (max-width: 600px) { h1 { font-size: 28px; } .stat-number { font-size: 64px; } }
+
+  /* Lightbox */
+  .lightbox-trigger { cursor: zoom-in; }
+  .lightbox-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; padding: 48px 24px; cursor: zoom-out; }
+  .lightbox-overlay.active { display: flex; }
+  .lightbox-overlay img { max-width: 100%; max-height: 88vh; border-radius: 8px; box-shadow: 0 24px 64px rgba(0,0,0,0.6); cursor: default; }
+  .lightbox-close { position: absolute; top: 20px; right: 28px; color: #fff; font-size: 34px; cursor: pointer; background: none; border: none; line-height: 1; padding: 8px; }
+
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a href="index.html">Praveen Visal</a>
+    <a href="index.html" class="back">&larr; All case studies</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">Case study 04: Building with AI</span>
+    <h1>I build the tool before I request the headcount.</h1>
+    <div class="stat-row">
+      <span class="stat-number">7</span>
+      <span class="stat-label">internal AI tools shipped and adopted. No dev team, no budget request, no headcount added.</span>
+    </div>
+    <div class="callout">Two of these seven live in the <a href="case-study-03-pmm.html" style="color: var(--teal);">PMM case study</a> instead, a monthly voice-of-customer engine and a live battlecard generator, since what they produce is messaging and competitive intelligence, not internal tooling. Both are covered in full there, worth a look if you're evaluating the technical side specifically. The other five are below.</div>
+  </section>
+
+  <section class="tool-section">
+    <div class="tool-label">Tool 01</div>
+    <div class="tool-title">Canary: a landing page monitor that runs before I login</div>
+    <p>Every paid landing page failing silently is money spent driving traffic to a broken page. Canary runs two checks every morning: a lightweight 404 sweep across every URL in about 13 seconds, then a deeper pass for broken CTAs, dead HubSpot form embeds, and broken modals. An email lands in my inbox before I start my day.</p>
+    <p>Some days it's all green. Some days it saves me from a bad morning.</p>
+    <div class="shot-grid">
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cs4-canary-1.png')" src="assets/cs4-canary-1.png" alt="Canary daily report email showing pass/fail status across pages"></div>
+      </div>
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cs4-canary-2.png')" src="assets/cs4-canary-2.png" alt="Canary detailed check output for one landing page"></div>
+      </div>
+    </div>
+    <p class="caption">The daily report, and the detailed check behind one page's result. (URLs partially redacted.)</p>
+  </section>
+
+  <section class="tool-section">
+    <div class="tool-label">Tool 02</div>
+    <div class="tool-title">ROI calculator: built for AEs, approved by the CTO</div>
+    <p>AEs needed a fast, credible way to show prospects the return on switching to Testsigma: not a static spreadsheet, a real interactive tool. I built the front end myself, iterated the underlying logic with a couple of AEs, and added PDF export so AEs could drop it straight into a deck.</p>
+    <p>It went through a CTO review before shipping, and it's been in active use in sales decks since.</p>
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs4-roi-calc-slack.png')" src="assets/cs4-roi-calc-slack.png" alt="Slack announcement of the ROI calculator launch with team reactions">
+    </div>
+    <p class="caption">The launch announcement. The CTO's "good job" is in the thread.</p>
+  </section>
+
+  <section class="tool-section">
+    <div class="tool-label">Tool 03</div>
+    <div class="tool-title">Cited: competitor analysis in 30 seconds, not 45 minutes</div>
+    <p>Every time someone needed to understand why a competitor's page was getting picked up in AI search results, it meant manually digging through the page, taking notes, and writing a brief from scratch, a 45-minute task done from zero every time. Cited is a Chrome extension that runs the same analysis (AEO signal score, citable questions, a ready-to-use brief, prioritized action items) on any page you're already viewing.</p>
+    <div class="shot-grid">
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cited-get-started.png')" src="assets/cited-get-started.png" alt="Cited Chrome extension panel showing its feature overview on a HubSpot blog page"></div>
+      </div>
+      <div>
+        <div class="screenshot-frame"><img class="lightbox-trigger" onclick="openLightbox('assets/cited-signal-score.png')" src="assets/cited-signal-score.png" alt="Cited's AEO signal score breakdown for the same page, showing 4 of 8 signals present"></div>
+      </div>
+    </div>
+    <p class="caption">Cited running live on a HubSpot blog page: the feature overview, then the actual AEO signal breakdown it produces. <a href="https://chromewebstore.google.com/detail/cited/fjhmdgjkeljcnkgbkbijhppclkpenflf" style="color: var(--teal);">Live on the Chrome Web Store</a>.</p>
+  </section>
+
+  <section class="tool-section">
+    <div class="tool-label">Tool 04</div>
+    <div class="tool-title">CRO-audit agent, turned into a team-wide skill</div>
+    <p>I built an agent that generates conversion hypotheses directly from a page screenshot and a heatmap, no CRO expertise needed to run it or act on what it finds. What made it worth sharing was converting it into a Claude skill the entire team could run themselves, instead of leaving it as something that only lived in my own workflow.</p>
+    <p>The instructions behind it are deliberately strict about one thing: a confident recommendation built on a wrong assumption is worse than no recommendation at all. The skill is required to separate what it can actually observe in the screenshots from what it's inferring, and to ask for missing inputs rather than guess.</p>
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs4-cro-audit-skill.png')" src="assets/cs4-cro-audit-skill.png" alt="The cro-audit Claude skill definition, showing its persona, required inputs, and instructions to separate observation from inference">
+    </div>
+    <p class="caption">The actual skill definition.</p>
+  </section>
+
+  <section class="tool-section">
+    <div class="tool-label">Tool 05</div>
+    <div class="tool-title">Ad-intelligence hub, built live during a hackathon</div>
+    <p>I co-organized Testsigma's first company-wide GTM AI hackathon, owning tech stack and tooling for close to 100 participants across five non-technical functions, then spent the same event building my own submission: a self-built ad-intelligence tool. It placed top 5 of 35 teams.</p>
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs4-ad-intelligence-tool-v3.png')" src="assets/cs4-ad-intelligence-tool-v3.png" alt="Ad-intelligence tool dashboard flagging underperforming keywords by GEO with pause and review recommendations">
+    </div>
+    <p class="caption">The tool itself: keyword-level flags by GEO, with a pause/review call and the budget at risk quantified.</p>
+    <div class="screenshot-frame">
+      <img class="lightbox-trigger" onclick="openLightbox('assets/cs4-hackathon.png')" src="assets/cs4-hackathon.png" alt="LinkedIn post and comments recognizing the hackathon organizing and results">
+    </div>
+    <p class="caption">The hackathon recap: organizing it and competing in it, on the same day.</p>
+  </section>
+
+  <section class="tool-section" style="border-top: 1px solid var(--border);">
+    <div class="callout">
+      None of these were requested. Each one started because a task kept eating time that should've gone somewhere else, and building the fix was faster than waiting for someone else to prioritize it.
+    </div>
+  </section>
+
+  <footer>
+    <div class="links">
+      <a href="https://www.linkedin.com/in/praveenvisal/">LinkedIn</a>
+      <a href="https://github.com/praveen-builds-stuff/ai-growth-toolkit">AI Toolkit</a>
+      <a href="index.html">Back to case studies</a>
+    </div>
+    <p>Praveen Visal, Growth &amp; Product Marketing</p>
+  </footer>
+
+</div>
+
+<div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-overlay').classList.add('active');
+  }
+  function closeLightbox(e) {
+    document.getElementById('lightbox-overlay').classList.remove('active');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+</body>
+</html>
